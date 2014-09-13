@@ -1,10 +1,16 @@
 #!/usr/bin/env python
 
-import threading
+#import threading
+import thread
+import os
+#import fcntl
 import time
 import sys
 import RPi.GPIO as GPIO
 import keyhandler
+
+FIFO = "commands.fifo"
+
 
 waitTime = 0.001
 
@@ -15,24 +21,27 @@ char = None;
 def keypressDetector():
 	global char
 	while True:
-		#try:
-			char = keyhandler.getKey()
-			time.sleep(0.005) # Bad things happen for some reason if there's no sleep at all
-		#except:
-			# Sometimes after the main program terminates, the keyhandler object is destroyed before this thread has finished
-			# We catch the exception to avoid outputting ugly error message in that case
-		#	pass
-
-
+		char = keyhandler.getKey()
+		time.sleep(0.005) # Bad things happen for some reason if there's no sleep at all
 
 try:
 	# Start the keypress detector in a separate thread, so it doesn't block the main program execution
-	#thread.start_new_thread(keypressDetector, ())
-	keyHandlerThread = threading.Thread(target=keypressDetector, name="keyHandler")
-	keyHandlerThread.start()
+	thread.start_new_thread(keypressDetector, ())
+
+	
 
 	# Start the main loop
 	while True:
+
+		fifo = os.open(FIFO, os.O_RDONLY | os.O_NONBLOCK)
+		command = os.read(fifo, 30).strip()
+		os.close(fifo)
+
+		if command == 'test':
+			print 'Success'
+		elif command != '':
+			print command
+
 		if char is not None:
 			#print "Key pressed is: {}".format(char)
 			if char == 'q':
