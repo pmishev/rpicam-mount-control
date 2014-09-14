@@ -1,4 +1,12 @@
 #!/usr/bin/env python
+#-----------------------------------
+# Name: RpiCam Stand Control
+#
+# Author: Plamen Mishev
+# Created: 10/09/2014
+#-----------------------------------
+
+# TODO: Make fifo file on-the-fly
 
 #import threading
 import thread
@@ -6,6 +14,7 @@ import os
 #import fcntl
 import time
 import sys
+import errno
 import RPi.GPIO as GPIO
 import keyhandler
 
@@ -74,6 +83,20 @@ class MotorControl:
 	def setState(self, state):
 		self.state = state
 
+def getCommand():
+	# Check if there is a command waiting in the queue
+	try:
+		fifo = os.open(FIFO, os.O_RDONLY | os.O_NONBLOCK)
+		command = os.read(fifo, 30).strip()
+		os.close(fifo)
+	except OSError, e:
+		# If the fifo file is currently open for writing, one of these exceptions would happen
+		if e.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
+			#print "Error({0}): {1}".format(e.errno, e.strerror)
+			command = ''
+
+	return command
+
 
 # Function that waits until a key is pressed and sets the key in the global scope
 def keypressDetector():
@@ -95,13 +118,10 @@ try:
 	# Start the main loop
 	while True:
 
-		# Check if there is a command waiting in the queue
-		fifo = os.open(FIFO, os.O_RDONLY | os.O_NONBLOCK)
-		command = os.read(fifo, 30).strip()
-		os.close(fifo)
+		command = getCommand()		
 
-#		if command != '':
-#			print "asd"
+		if command != '':
+			print command
 
 		if char is not None:
 			#print "Key pressed is: {}".format(char)
@@ -136,5 +156,5 @@ try:
 # Stop on Ctrl+C and clean up
 except (KeyboardInterrupt, SystemExit):
 	print "Exiting"
-	#GPIO.cleanup()
+	GPIO.cleanup()
 
