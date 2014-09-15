@@ -24,7 +24,8 @@ GPIO.setmode(GPIO.BOARD)
 FIFO = "commands.fifo" 	# The FIFO file where we read commands from
 waitTime = 0.001 		# Seconds to wait after each iteration
 
-char = None; 			# The currently pressed keyboard key
+char = None 			# The currently pressed keyboard key
+command = ''			# The command received from the queue
 
 class MotorControl:
 
@@ -102,8 +103,10 @@ def getCommand():
 def keypressDetector():
 	global char
 	while True:
-		char = keyhandler.getKey()
-		time.sleep(0.005) # Bad things happen for some reason if there's no sleep at all
+		if type(keyhandler).__name__ == 'module':
+			char = keyhandler.getKey()
+		if type(time).__name__ == 'module':
+			time.sleep(0.005) # Bad things happen for some reason if there's no sleep at all
 
 try:
 	# Initialize motors

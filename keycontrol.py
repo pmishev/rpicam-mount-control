@@ -20,8 +20,12 @@ char = None; 			# The currently pressed keyboard key
 def keypressDetector():
 	global char
 	while True:
-		char = keyhandler.getKey()
-		time.sleep(0.005) # Bad things happen for some reason if there's no sleep at all
+		# Sometimes on program eit, the thread is still running but the modules are already unloaded, 
+		# so we check their existance to avoid error messages
+		if type(keyhandler).__name__ == 'module':
+			char = keyhandler.getKey()
+		if type(time).__name__ == 'module':
+			time.sleep(0.005) # Bad things happen for some reason if there's no sleep at all
 
 
 def sendCommand(command, retries = 5, msgOnError = None):
@@ -57,11 +61,6 @@ def sendCommand(command, retries = 5, msgOnError = None):
 		print msgOnError	
 
 	return -1
-		
-
-#	fifo = open(FIFO, 'w')
-#	fifo.write(command)
-#	fifo.close()
 
 try:
 	# Start the keypress detector in a separate thread, so it doesn't block the main program execution
@@ -72,12 +71,12 @@ try:
 #	queue.close()
 #	sys.exit()
 
-	queue = os.open(FIFO, os.O_WRONLY)
-	try:
-		os.write(queue, "asd")
-	finally:
-		os.close(queue)
-	sys.exit()
+#	queue = os.open(FIFO, os.O_WRONLY)
+#	try:
+#		os.write(queue, "asd")
+#	finally:
+#		os.close(queue)
+#	sys.exit()
 
 
 	print 'Waiting for motor controller...'
