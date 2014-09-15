@@ -8,15 +8,11 @@
 
 # TODO: Make fifo file on-the-fly
 
-#import threading
-import thread
 import os
-#import fcntl
 import time
 import sys
 import errno
 import RPi.GPIO as GPIO
-import keyhandler
 
 # Use physical pin numbers
 GPIO.setmode(GPIO.BOARD)
@@ -24,7 +20,6 @@ GPIO.setmode(GPIO.BOARD)
 FIFO = "commands.fifo" 	# The FIFO file where we read commands from
 waitTime = 0.001 		# Seconds to wait after each iteration
 
-char = None 			# The currently pressed keyboard key
 command = ''			# The command received from the queue
 
 class MotorControl:
@@ -98,25 +93,11 @@ def getCommand():
 
 	return command
 
-
-# Function that waits until a key is pressed and sets the key in the global scope
-def keypressDetector():
-	global char
-	while True:
-		if type(keyhandler).__name__ == 'module':
-			char = keyhandler.getKey()
-		if type(time).__name__ == 'module':
-			time.sleep(0.005) # Bad things happen for some reason if there's no sleep at all
-
 try:
 	# Initialize motors
 	horizontalMotor = MotorControl('horizontal', [16,12,10,8])
 	verticalMotor   = MotorControl('vertical',   [19,15,13,11])
 	motors = [horizontalMotor, verticalMotor]
-
-	# Start the keypress detector in a separate thread, so it doesn't block the main program execution
-	thread.start_new_thread(keypressDetector, ())
-
 
 	# Start the main loop
 	while True:
@@ -124,32 +105,34 @@ try:
 		command = getCommand()		
 
 		if command != '':
-			print command
-
-		if char is not None:
-			#print "Key pressed is: {}".format(char)
-			if char == 'q':
+			if command == 'quit':
 				sys.exit()
-			elif char == 'a':
+			elif command == 'go left':
 				print "Go left"
 				horizontalMotor.setState(MotorControl.MOVING_LEFT)
-			elif char == 'd':
+			elif command == 'go right':
 				print "Go right"
 				horizontalMotor.setState(MotorControl.MOVING_RIGHT)
-			elif char == 'w':
+			elif command == 'go up':
 				print "Go up"
 				verticalMotor.setState(MotorControl.MOVING_LEFT)
-			elif char == 's':
+			elif command == 'go down':
 				print "Go down"
 				verticalMotor.setState(MotorControl.MOVING_RIGHT)
-			elif char == 'r':
+			elif command == 'stop horizontal':
 				print "Stop horizontal"
 				horizontalMotor.setState(MotorControl.STOPPED)
-			elif char == 'f':
+			elif command == 'stop vertical':
 				print "Stop vertical"
 				verticalMotor.setState(MotorControl.STOPPED)
+			elif command == 'stop':
+				print "Stop all"
+				horizontalMotor.setState(MotorControl.STOPPED)
+				verticalMotor.setState(MotorControl.STOPPED)
+			else:
+				print "<Unknown command>"
 
-			char = None
+			command = ''
 
 		for motor in motors:
 			motor.updateMotor()
