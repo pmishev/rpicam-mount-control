@@ -40,10 +40,10 @@ try:
 		elif char == 's':
 			print "Go down"
 			sendCommand('go down')
-		elif char == 'r':
+		elif char == 'f':
 			print "Stop horizontal"
 			sendCommand('stop horizontal')
-		elif char == 'f':
+		elif char == 'r':
 			print "Stop vertical"
 			sendCommand('stop vertical')
 

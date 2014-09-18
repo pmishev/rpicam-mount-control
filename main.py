@@ -75,6 +75,15 @@ class MotorControl:
 			else:
 				GPIO.output(pinNumber, False)
 			
+	# Release the coils that drive the motor, so they are not powered while it's stopped
+	# This helps energy consumption and doesn't keep the motors hot while not moving
+	def releaseCoils(self):
+
+		print "Releasing coils of motor %s" %(self.motorAlias)
+		# Go through each of the 4 controlling pins
+		for pin in range(0, 4):
+			# Release each coil
+			GPIO.output(self.pins[pin], False)
 
 	def setState(self, state):
 		self.state = state
@@ -95,8 +104,8 @@ def getCommand():
 
 try:
 	# Initialize motors
-	horizontalMotor = MotorControl('horizontal', [16,12,10,8])
-	verticalMotor   = MotorControl('vertical',   [19,15,13,11])
+	horizontalMotor = MotorControl('horizontal', [19,15,13,11])
+	verticalMotor   = MotorControl('vertical',   [16,12,10,8])
 	motors = [horizontalMotor, verticalMotor]
 
 	# Start the main loop
@@ -107,28 +116,40 @@ try:
 		if command != '':
 			if command == 'quit':
 				sys.exit()
+
 			elif command == 'go left':
 				print "Go left"
 				horizontalMotor.setState(MotorControl.MOVING_LEFT)
+
 			elif command == 'go right':
 				print "Go right"
 				horizontalMotor.setState(MotorControl.MOVING_RIGHT)
+
 			elif command == 'go up':
 				print "Go up"
 				verticalMotor.setState(MotorControl.MOVING_LEFT)
+
 			elif command == 'go down':
 				print "Go down"
 				verticalMotor.setState(MotorControl.MOVING_RIGHT)
+
 			elif command == 'stop horizontal':
 				print "Stop horizontal"
 				horizontalMotor.setState(MotorControl.STOPPED)
+				horizontalMotor.releaseCoils()
+
 			elif command == 'stop vertical':
 				print "Stop vertical"
 				verticalMotor.setState(MotorControl.STOPPED)
+				verticalMotor.releaseCoils()
+
 			elif command == 'stop':
 				print "Stop all"
 				horizontalMotor.setState(MotorControl.STOPPED)
+				horizontalMotor.releaseCoils()
 				verticalMotor.setState(MotorControl.STOPPED)
+				verticalMotor.releaseCoils()
+
 			else:
 				print "<Unknown command>"
 
